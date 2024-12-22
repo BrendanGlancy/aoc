@@ -1,4 +1,4 @@
-let input = `67 69 70 71 72 75 74
+let reports = `67 69 70 71 72 75 74
 20 21 24 26 28 28
 43 45 48 50 53 57
 54 55 57 60 62 67
@@ -999,46 +999,38 @@ let input = `67 69 70 71 72 75 74
 19 16 14 11 10 9
 67 68 70 71 74 76`
 
+function verify(line, exclude_idx) {
+    let nums = line.trim()
+        .split(' ')
+        .map((x) => parseInt(x));
 
-function safe(input) {
-    const rows = input.trim().split(/\n+/).map(line =>
-        line.trim().split(/\s+/).map(Number)
-    );
+    if (exclude_idx !== -1) {
+        nums.splice(exclude_idx, 1);
+    }
 
-    let count = 0;
-
-    for (let row of rows) {
-        if (valid(row)) {
-            count++;
+    let is_safe = true;
+    let increasing = nums[1] - nums[0] > 0;
+    for (let i = 1; i < nums.length; i++) {
+        let safe;
+        if (increasing) {
+            safe = 1 <= nums[i] - nums[i - 1] && nums[i] - nums[i - 1] <= 3;
         } else {
-            for (let i = 0; i < row.length; i++) {
-                const mod_row = [...row.splice(i, 1)];
-                if (valid(mod_row)) {
-                    count++;
-                    break;
-                }
-            }
+            safe = 1 <= nums[i - 1] - nums[i] && nums[i - 1] - nums[i] <= 3;
+        }
+        is_safe &&= safe;
+    }
+
+    if (exclude_idx === -1 && !is_safe) {
+        for (let i = 0; i < nums.length; i++) {
+            is_safe ||= verify(line, i);
         }
     }
 
-    console.log(count);
-
-
-    function valid(row) {
-        if (row.length < 2) return true;
-        const increasing = row[0] < row[1];
-
-        for (let i = 0; row.length - 1; i++) {
-            if (
-                (increasing && row[i] >= row[i + 1]) ||
-                (!increasing && row[i] <= row[i + 1]) ||
-                Math.abs(row[i] - row[i + 1]) > 3
-            ) {
-                return false;
-            }
-            return true;
-        }
-    }
+    return is_safe;
 }
 
-safe(input)
+let safe_count = reports.trim()
+    .split('\n')
+    .map((x) => verify(x, -1))
+    .reduce((acc, x) => acc + x, 0);
+console.log(safe_count);
